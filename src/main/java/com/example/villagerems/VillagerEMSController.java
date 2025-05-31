@@ -1,5 +1,7 @@
 package com.example.villagerems;
-
+import javafx.scene.layout.VBox;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -19,7 +21,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class VillagerEMSController {
-
+    @FXML private VBox sidebar;
+    @FXML private ImageView villagerImage;
+    @FXML private Label villagerName;
+    @FXML private Label villagerType;
+    @FXML private Label villagerVillage;
+    @FXML private Label villagerLevel;
+    @FXML private Label villagerSpecialty;
     @FXML
     private TableView<VillagerEmployee> employeeTable;
     @FXML
@@ -107,13 +115,49 @@ public class VillagerEMSController {
         initializeReportArea();
         addSampleData();
         updateStatistics();
+        employeeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+            updateSidebar(newSel);
+        });
+    }
+    private void updateSidebar(VillagerEmployee villager) {
+        if (villager == null) {
+            sidebar.setVisible(false);
+            return;
+        }
+        sidebar.setVisible(true);
+        villagerName.setText(villager.getName());
+        villagerType.setText("Type: " + villager.getProfession());
+        villagerVillage.setText("Village: " + villager.getVillage());
+        villagerLevel.setText("XP Level: " + villager.getExperienceLevel());
+
+        // Example: set specialty/knowledge
+        if (villager instanceof FarmerVillager) {
+            villagerSpecialty.setText("Crop: " + ((FarmerVillager) villager).getCropSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/farmer.png")));
+        } else if (villager instanceof BlacksmithVillager) {
+            villagerSpecialty.setText("Specialty: " + ((BlacksmithVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/blacksmith.png")));
+        } else if (villager instanceof ButcherVillager) {
+            villagerSpecialty.setText("Specialty: " + ((ButcherVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/butcher.png")));
+        } else if (villager instanceof ClericVillager) {
+            villagerSpecialty.setText("Specialty: " + ((ClericVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/cleric.png")));
+        } else if (villager instanceof LibrarianVillager) {
+            villagerSpecialty.setText("Knowledge: " + ((LibrarianVillager) villager).getKnowledgeArea());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/librarian.png")));
+        } else {
+            villagerSpecialty.setText("");
+            villagerImage.setImage(null);
+        }
     }
 
     private void initializeReportArea() {
         reportFlow.getChildren().clear();
         reportFlow.getChildren().add(new Text("📜 §lWelcome to the Minecraft Village Workforce Ledger!§r\n"));
         reportFlow.getChildren().add(new Text("§7No villagers registered yet. Use the buttons above to recruit!§r\n"));
-        reportFlow.getChildren().add(new Text("⏰ System booted at: " + getCurrentTimestamp() + "\n\n"));
+        reportFlow.getChildren().add(new Text("⏰ System booted at: " + getCurrentTimestamp() + "\n\n"))
+        ;
     }
 
     private void setupTableColumns() {
