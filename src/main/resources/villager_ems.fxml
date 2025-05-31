@@ -30,6 +30,7 @@
                 <Button onAction="#onCalculateSalary" prefWidth="140" style="-fx-background-color: #9C27B0; -fx-text-fill: white;" text="💰 Calculate Salary" />
                 <Button onAction="#onGenerateReport" prefWidth="140" style="-fx-background-color: #607D8B; -fx-text-fill: white;" text="📊 Generate Report" />
                 <Button onAction="#onRefresh" prefWidth="100" style="-fx-background-color: #795548; -fx-text-fill: white;" text="🔄 Refresh" />
+                <Button text="Speak to a guy I shrank and put in this PC" onAction="#onStartChatbot"/>
             </HBox>
         </VBox>
     </top>
