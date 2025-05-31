@@ -58,6 +58,12 @@ public class VillagerEMSController {
         });
     }
 
+    @FXML
+    private void onStartChatbot() {
+        ChatbotWindow window = new ChatbotWindow();
+        window.show()
+    }
+
     private void setupTableColumns() {
         idColumn.setText("Villager ID");
         nameColumn.setText("Villager Name");
