@@ -7,11 +7,16 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.geometry.Insets;
 import javafx.scene.layout.GridPane;
+import javafx.stage.FileChooser;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Optional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
-import com.example.villagerems.BlacksmithVillager;
 
 public class VillagerEMSController {
 
@@ -30,27 +35,95 @@ public class VillagerEMSController {
     @FXML
     private TableColumn<VillagerEmployee, String> typeColumn;
     @FXML
-    private TextArea reportArea;
+    private TextFlow reportFlow;
 
-    private ObservableList<VillagerEmployee> employees = FXCollections.observableArrayList();
-    private int nextId = 1003;
+    private ObservableList<VillagerEmployee> villagers = FXCollections.observableArrayList();
+    private int nextId = 1006;
+
+    @FXML
+    private TextField searchField;
+
+    @FXML
+    private void onSearchVillager() {
+        String query = searchField.getText().toLowerCase();
+        ObservableList<VillagerEmployee> filteredVillagers = villagers.filtered(villager ->
+                villager.getName().toLowerCase().contains(query) ||
+                        villager.getProfession().toLowerCase().contains(query) ||
+                        villager.getVillage().toLowerCase().contains(query)
+        );
+        employeeTable.setItems(filteredVillagers);
+        appendLog(
+                "Search Results",
+                String.format("• Query: %s\n• Villagers Found: %d", query, filteredVillagers.size()),
+                "🔍"
+        );
+    }
+
+    @FXML
+    private void onExportReport() {
+        exportReportToFile();
+    }
+
+    private void exportReportToFile() {
+        try {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Export Report");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            File file = fileChooser.showSaveDialog(null);
+
+            if (file != null) {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                    writer.write(getReportFlowText());
+                    appendLog(
+                            "Report Exported",
+                            String.format("Report exported successfully to: %s", file.getAbsolutePath()),
+                            "✅"
+                    );
+                }
+            }
+        } catch (IOException e) {
+            appendLog(
+                    "Error",
+                    "Failed to export report due to an I/O error.",
+                    "❌"
+            );
+        }
+    }
+
+    private String getReportFlowText() {
+        StringBuilder sb = new StringBuilder();
+        for (javafx.scene.Node node : reportFlow.getChildren()) {
+            if (node instanceof Text) {
+                sb.append(((Text) node).getText());
+            }
+        }
+        return sb.toString();
+    }
 
     @FXML
     public void initialize() {
         setupTableColumns();
-        employeeTable.setItems(employees);
+        employeeTable.setItems(villagers);
         initializeReportArea();
         addSampleData();
         updateStatistics();
     }
 
     private void initializeReportArea() {
-        reportArea.setText("📋 Welcome to the Village Employee Management System!\n");
-        reportArea.appendText("Total Employees: 0\n");
-        reportArea.appendText("System initialized at: " + getCurrentTimestamp() + "\n\n");
+        reportFlow.getChildren().clear();
+        reportFlow.getChildren().add(new Text("📜 §lWelcome to the Minecraft Village Workforce Ledger!§r\n"));
+        reportFlow.getChildren().add(new Text("§7No villagers registered yet. Use the buttons above to recruit!§r\n"));
+        reportFlow.getChildren().add(new Text("⏰ System booted at: " + getCurrentTimestamp() + "\n\n"));
     }
 
     private void setupTableColumns() {
+        idColumn.setText("Villager ID");
+        nameColumn.setText("Villager Name");
+        villageColumn.setText("Village");
+        levelColumn.setText("XP Level");
+        salaryColumn.setText("Emeralds/Month");
+        typeColumn.setText("Profession");
+
         idColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         villageColumn.setCellValueFactory(new PropertyValueFactory<>("village"));
@@ -64,7 +137,6 @@ public class VillagerEMSController {
             return new javafx.beans.property.SimpleStringProperty(emp.getProfession());
         });
 
-        // Format salary column with currency symbol
         salaryColumn.setCellFactory(column -> new TableCell<VillagerEmployee, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
@@ -72,13 +144,11 @@ public class VillagerEMSController {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(String.format("💰 $%.2f", item));
+                    setText("💎 " + String.format("%.2f", item));
                 }
             }
         });
     }
-
-    // FXML Event Handlers - these match the onAction references in the FXML
 
     @FXML
     private void onAddVillager() {
@@ -86,17 +156,19 @@ public class VillagerEMSController {
         Optional<VillagerEmployee> result = dialog.showAndWait();
 
         if (result.isPresent()) {
-            VillagerEmployee newEmployee = result.get();
-            newEmployee.setEmployeeId(nextId++);
-            employees.add(newEmployee);
+            VillagerEmployee newVillager = result.get();
+            newVillager.setEmployeeId(nextId++);
+            villagers.add(newVillager);
 
-            // Log the addition
-            reportArea.appendText("➕ Added new villager: " + newEmployee.getName() + "\n");
-            reportArea.appendText("   Type: " + newEmployee.getProfession() + "\n");
-            reportArea.appendText("   Village: " + newEmployee.getVillage() + "\n");
-            reportArea.appendText("   Level: " + newEmployee.getExperienceLevel() + "\n");
-            reportArea.appendText("   Added at: " + getCurrentTimestamp() + "\n\n");
-
+            appendLog(
+                    "Villager Recruited!",
+                    String.format(
+                            "• Name: %s\n• Profession: %s\n• Village: %s\n• XP Level: %d\n• Registered at: %s",
+                            newVillager.getName(), newVillager.getProfession(), newVillager.getVillage(),
+                            newVillager.getExperienceLevel(), getCurrentTimestamp()
+                    ),
+                    "🟩"
+            );
             updateStatistics();
         }
     }
@@ -105,7 +177,7 @@ public class VillagerEMSController {
     private void onEditVillager() {
         VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No Selection", "Please select a villager to edit.");
+            showAlert("No Villager Selected", "Select a villager to edit their details.");
             return;
         }
 
@@ -115,13 +187,10 @@ public class VillagerEMSController {
         if (result.isPresent()) {
             VillagerEmployee edited = result.get();
 
-            // Update basic properties
             selected.setName(edited.getName());
             selected.setVillage(edited.getVillage());
             selected.setExperienceLevel(edited.getExperienceLevel());
 
-            // Update specific properties based on type
-// Update specific properties based on type
             if (selected instanceof FarmerVillager && edited instanceof FarmerVillager) {
                 FarmerVillager s = (FarmerVillager) selected, e = (FarmerVillager) edited;
                 s.setHourlyRate(e.getHourlyRate());
@@ -132,16 +201,33 @@ public class VillagerEMSController {
                 s.setHourlyRate(e.getHourlyRate());
                 s.setHoursWorked(e.getHoursWorked());
                 s.setSpecialty(e.getSpecialty());
+            } else if (selected instanceof ButcherVillager && edited instanceof ButcherVillager) {
+                ButcherVillager s = (ButcherVillager) selected, e = (ButcherVillager) edited;
+                s.setHourlyRate(e.getHourlyRate());
+                s.setHoursWorked(e.getHoursWorked());
+                s.setSpecialty(e.getSpecialty());
+            } else if (selected instanceof ClericVillager && edited instanceof ClericVillager) {
+                ClericVillager s = (ClericVillager) selected, e = (ClericVillager) edited;
+                s.setHourlyRate(e.getHourlyRate());
+                s.setHoursWorked(e.getHoursWorked());
+                s.setSpecialty(e.getSpecialty());
             } else if (selected instanceof LibrarianVillager && edited instanceof LibrarianVillager) {
                 LibrarianVillager s = (LibrarianVillager) selected, e = (LibrarianVillager) edited;
                 s.setHourlyRate(e.getHourlyRate());
                 s.setHoursWorked(e.getHoursWorked());
-                s.setSpecialty(e.getSpecialty());
+                s.setKnowledgeArea(e.getKnowledgeArea());
             }
 
             employeeTable.refresh();
-            reportArea.appendText("✏️ Edited villager: " + selected.getName() + "\n");
-            reportArea.appendText("   Updated at: " + getCurrentTimestamp() + "\n\n");
+            appendLog(
+                    "Villager Data Updated!",
+                    String.format(
+                            "• Name: %s\n• Profession: %s\n• Village: %s\n• XP Level: %d\n• Updated at: %s",
+                            selected.getName(), selected.getProfession(), selected.getVillage(),
+                            selected.getExperienceLevel(), getCurrentTimestamp()
+                    ),
+                    "📝"
+            );
             updateStatistics();
         }
     }
@@ -150,21 +236,26 @@ public class VillagerEMSController {
     private void onDeleteVillager() {
         VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No Selection", "Please select a villager to remove.");
+            showAlert("No Villager Selected", "Select a villager to release from the workforce.");
             return;
         }
 
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmation.setTitle("Confirm Deletion");
-        confirmation.setHeaderText("Remove Villager");
-        confirmation.setContentText("Are you sure you want to remove " + selected.getName() + "?");
+        confirmation.setTitle("Release Villager");
+        confirmation.setHeaderText("Release " + selected.getName() + "?");
+        confirmation.setContentText("Are you sure you want to release this villager from duty?");
 
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            employees.remove(selected);
-            reportArea.appendText("❌ Removed villager: " + selected.getName() + "\n");
-            reportArea.appendText("   Former village: " + selected.getVillage() + "\n");
-            reportArea.appendText("   Removed at: " + getCurrentTimestamp() + "\n\n");
+            villagers.remove(selected);
+            appendLog(
+                    "Villager Released!",
+                    String.format(
+                            "• Name: %s\n• Profession: %s\n• Released at: %s",
+                            selected.getName(), selected.getProfession(), getCurrentTimestamp()
+                    ),
+                    "🟥"
+            );
             updateStatistics();
         }
     }
@@ -173,146 +264,78 @@ public class VillagerEMSController {
     private void onLevelUp() {
         VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No Selection", "Please select a villager to level up.");
+            showAlert("No Villager Selected", "Select a villager to grant XP.");
             return;
         }
 
         int oldLevel = selected.getExperienceLevel();
         double oldSalary = selected.computeSalary();
 
-        // Level up the villager
         if (selected instanceof EmployeeActions) {
             ((EmployeeActions) selected).levelUp();
         }
-
         employeeTable.refresh();
-
-        reportArea.appendText("⬆️ LEVEL UP! " + selected.getName() + "\n");
-        reportArea.appendText("   Level: " + oldLevel + " → " + selected.getExperienceLevel() + "\n");
-        reportArea.appendText("   Salary: $" + String.format("%.2f", oldSalary) + " → $" + String.format("%.2f", selected.computeSalary()) + "\n");
-
-        if (selected instanceof FarmerVillager) {
-            FarmerVillager farmer = (FarmerVillager) selected;
-            reportArea.appendText("   New Hourly Rate: $" + String.format("%.2f", farmer.getHourlyRate()) + "\n");
-        } else if (selected instanceof BlacksmithVillager) {
-            BlacksmithVillager blacksmith = (BlacksmithVillager) selected;
-            reportArea.appendText("   New Monthly Rate: $" + String.format("%.2f", blacksmith.getMonthlyRate()) + "\n");
-        }
-
-        reportArea.appendText("   Leveled up at: " + getCurrentTimestamp() + "\n\n");
-        updateStatistics();
-    }
-
-    @FXML
-    private void onCalculateSalary() {
-        VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
-
-        if (selected == null) {
-            // Calculate total payroll for all employees
-            double totalPayroll = employees.stream()
-                    .mapToDouble(VillagerEmployee::computeSalary)
-                    .sum();
-
-            reportArea.appendText("💰 TOTAL PAYROLL CALCULATION\n");
-            reportArea.appendText("============================\n");
-            reportArea.appendText("Total Monthly Payroll: $" + String.format("%.2f", totalPayroll) + "\n");
-            reportArea.appendText("Total Employees: " + employees.size() + "\n");
-            if (!employees.isEmpty()) {
-                reportArea.appendText("Average Salary: $" + String.format("%.2f", totalPayroll / employees.size()) + "\n");
-            }
-            reportArea.appendText("Calculated at: " + getCurrentTimestamp() + "\n\n");
-        } else {
-            // Calculate salary for selected employee
-            double salary = selected.computeSalary();
-            reportArea.appendText("💰 SALARY CALCULATION for " + selected.getName() + "\n");
-            reportArea.appendText("========================================\n");
-
-            if (selected instanceof FarmerVillager) {
-                FarmerVillager farmer = (FarmerVillager) selected;
-                reportArea.appendText("Hourly Rate: $" + String.format("%.2f", farmer.getHourlyRate()) + "\n");
-                reportArea.appendText("Hours Worked: " + farmer.getHoursWorked() + "\n");
-                reportArea.appendText("Experience Level: " + farmer.getExperienceLevel() + "\n");
-                reportArea.appendText("Crop Specialty: " + farmer.getCropSpecialty() + "\n");
-            } else if (selected instanceof BlacksmithVillager) {
-                BlacksmithVillager blacksmith = (BlacksmithVillager) selected;
-                reportArea.appendText("Monthly Rate: $" + String.format("%.2f", blacksmith.getMonthlyRate()) + "\n");
-                reportArea.appendText("Experience Level: " + blacksmith.getExperienceLevel() + "\n");
-                reportArea.appendText("Specialty: " + blacksmith.getSpecialty() + "\n");
-            }
-
-            reportArea.appendText("Calculated Salary: $" + String.format("%.2f", salary) + "\n");
-            reportArea.appendText("Calculated at: " + getCurrentTimestamp() + "\n\n");
-        }
+        appendLog(
+                "Villager Leveled Up!",
+                String.format(
+                        "• Name: %s\n• Profession: %s\n• XP: %d → %d\n• Emeralds: 💎 %.2f → 💎 %.2f\n• XP granted at: %s",
+                        selected.getName(), selected.getProfession(), oldLevel, selected.getExperienceLevel(),
+                        oldSalary, selected.computeSalary(), getCurrentTimestamp()
+                ),
+                "✨"
+        );
     }
 
     @FXML
     private void onGenerateReport() {
-        reportArea.appendText("📊 COMPREHENSIVE VILLAGE EMPLOYEE REPORT\n");
-        reportArea.appendText("=========================================\n");
-        reportArea.appendText("Generated: " + getCurrentTimestamp() + "\n\n");
-
-        // Calculate statistics
-        long farmers = employees.stream().filter(e -> e instanceof FarmerVillager).count();
-        long blacksmiths = employees.stream().filter(e -> e instanceof BlacksmithVillager).count();
-        double totalPayroll = employees.stream().mapToDouble(VillagerEmployee::computeSalary).sum();
-
-        // Summary section
-        reportArea.appendText("SUMMARY:\n");
-        reportArea.appendText("--------\n");
-        reportArea.appendText("Total Employees: " + employees.size() + "\n");
-        reportArea.appendText("Farmers: " + farmers + "\n");
-        reportArea.appendText("Blacksmiths: " + blacksmiths + "\n");
-        reportArea.appendText("Total Monthly Payroll: $" + String.format("%.2f", totalPayroll) + "\n");
-        if (!employees.isEmpty()) {
-            reportArea.appendText("Average Salary: $" + String.format("%.2f", totalPayroll / employees.size()) + "\n");
+        StringBuilder details = new StringBuilder();
+        int count = 1;
+        for (VillagerEmployee emp : villagers) {
+            details.append(String.format(
+                    "• #%d: %s (%s)\n",
+                    emp.getEmployeeId(), emp.getName(), emp.getProfession()
+            ));
+            details.append(String.format(
+                    "    - Village: %s\n", emp.getVillage()
+            ));
+            details.append(String.format(
+                    "    - XP Level: %d\n", emp.getExperienceLevel()
+            ));
+            details.append(String.format(
+                    "    - Emeralds: 💎 %.2f\n", emp.computeSalary()
+            ));
+            details.append(String.format(
+                    "    - Report: %s\n", ((EmployeeActions) emp).submitReport()
+            ));
+            details.append("    ----------------------------------------\n");
+            count++;
         }
-        reportArea.appendText("\n");
-
-        // Detailed employee list
-        if (!employees.isEmpty()) {
-            reportArea.appendText("EMPLOYEE DETAILS:\n");
-            reportArea.appendText("-----------------\n");
-            for (VillagerEmployee emp : employees) {
-                reportArea.appendText("ID: " + emp.getEmployeeId() + " | ");
-                reportArea.appendText(emp.getName() + " | ");
-                reportArea.appendText("Village: " + emp.getVillage() + " | ");
-                reportArea.appendText("Level: " + emp.getExperienceLevel() + " | ");
-                reportArea.appendText("Profession: " + emp.getProfession() + " | ");
-                reportArea.appendText("Salary: $" + String.format("%.2f", emp.computeSalary()) + "\n");
-
-                if (emp instanceof FarmerVillager) {
-                    FarmerVillager farmer = (FarmerVillager) emp;
-                    reportArea.appendText("   └─ Specialty: " + farmer.getCropSpecialty() +
-                            ", Rate: $" + String.format("%.2f", farmer.getHourlyRate()) + "/hr, " +
-                            "Hours: " + farmer.getHoursWorked() + "/week\n");
-                    reportArea.appendText("   └─ Report: " + farmer.submitReport() + "\n");
-                } else if (emp instanceof BlacksmithVillager) {
-                    BlacksmithVillager blacksmith = (BlacksmithVillager) emp;
-                    reportArea.appendText("   └─ Specialty: " + blacksmith.getSpecialty() +
-                            ", Monthly Rate: $" + String.format("%.2f", blacksmith.getMonthlyRate()) + "\n");
-                    reportArea.appendText("   └─ Report: " + blacksmith.submitReport() + "\n");
-                }
-                reportArea.appendText("\n");
-            }
-        }
-        reportArea.appendText("=== End of Report ===\n\n");
+        String report = String.format(
+                "📊 Village Workforce Report\n========================================\n" +
+                        "• Total Villagers: %d\n• Generated: %s\n\n%s" +
+                        "========================================\n=== End of Report ===\n",
+                villagers.size(), getCurrentTimestamp(), details
+        );
+        appendLog("Village Workforce Report", report, "📊");
     }
 
     @FXML
     private void onRefresh() {
         employeeTable.refresh();
         updateStatistics();
-        reportArea.appendText("🔄 Table refreshed at: " + getCurrentTimestamp() + "\n\n");
+        appendLog(
+                "Table Refreshed",
+                String.format("Refreshed at: %s", getCurrentTimestamp()),
+                "🔄"
+        );
     }
-
-    // Dialog creation methods
 
     private Dialog<VillagerEmployee> createAddVillagerDialog() {
         Dialog<VillagerEmployee> dialog = new Dialog<>();
-        dialog.setTitle("Add New Villager");
+        dialog.setTitle("Recruit New Villager");
         dialog.setHeaderText("Enter villager details:");
 
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        ButtonType addButtonType = new ButtonType("Recruit", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
 
         GridPane grid = createVillagerForm(null);
@@ -355,23 +378,27 @@ public class VillagerEMSController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        // Form fields
         TextField nameField = new TextField();
         TextField villageField = new TextField();
         Spinner<Integer> levelSpinner = new Spinner<>(1, 10, 1);
         TextField rateField = new TextField();
         Spinner<Integer> hoursSpinner = new Spinner<>(20, 60, 40);
         ComboBox<String> typeCombo = new ComboBox<>();
-        typeCombo.getItems().addAll("Farmer", "Blacksmith");
+        typeCombo.getItems().addAll("Farmer", "Blacksmith", "Butcher", "Cleric", "Librarian");
         TextField specialtyField = new TextField();
 
-        // Populate fields if editing existing villager
         if (villager != null) {
             nameField.setText(villager.getName());
             villageField.setText(villager.getVillage());
             levelSpinner.getValueFactory().setValue(villager.getExperienceLevel());
 
-            if (villager instanceof FarmerVillager) {
+            if (villager instanceof ClericVillager) {
+                ClericVillager cleric = (ClericVillager) villager;
+                typeCombo.setValue("Cleric");
+                rateField.setText(String.valueOf(cleric.getHourlyRate()));
+                hoursSpinner.getValueFactory().setValue(cleric.getHoursWorked());
+                specialtyField.setText(cleric.getSpecialty());
+            } else if (villager instanceof FarmerVillager) {
                 FarmerVillager farmer = (FarmerVillager) villager;
                 typeCombo.setValue("Farmer");
                 rateField.setText(String.valueOf(farmer.getHourlyRate()));
@@ -381,35 +408,47 @@ public class VillagerEMSController {
                 BlacksmithVillager blacksmith = (BlacksmithVillager) villager;
                 typeCombo.setValue("Blacksmith");
                 rateField.setText(String.valueOf(blacksmith.getMonthlyRate()));
-                hoursSpinner.getValueFactory().setValue(40); // Default hours for display
+                hoursSpinner.getValueFactory().setValue(40);
                 specialtyField.setText(blacksmith.getSpecialty());
+            } else if (villager instanceof ButcherVillager) {
+                ButcherVillager butcher = (ButcherVillager) villager;
+                typeCombo.setValue("Butcher");
+                rateField.setText(String.valueOf(butcher.getHourlyRate()));
+                hoursSpinner.getValueFactory().setValue(butcher.getHoursWorked());
+                specialtyField.setText(butcher.getSpecialty());
+            } else if (villager instanceof LibrarianVillager) {
+                LibrarianVillager librarian = (LibrarianVillager) villager;
+                typeCombo.setValue("Librarian");
+                rateField.setText(String.valueOf(librarian.getHourlyRate()));
+                hoursSpinner.getValueFactory().setValue(librarian.getHoursWorked());
+                specialtyField.setText(librarian.getKnowledgeArea());
             }
         } else {
-            // Default values for new villager
             typeCombo.setValue("Farmer");
             rateField.setText("15.0");
             specialtyField.setText("Wheat");
         }
 
-// Inside createVillagerForm or similar method in VillagerEMSController.java
-
-        grid.add(new Label("Name:"), 0, 0);
+        grid.add(new Label("Villager Name:"), 0, 0);
         grid.add(nameField, 1, 0);
 
         grid.add(new Label("Village:"), 0, 1);
         grid.add(villageField, 1, 1);
 
-        grid.add(new Label("Level:"), 0, 2);
+        grid.add(new Label("XP Level:"), 0, 2);
         grid.add(levelSpinner, 1, 2);
 
-        grid.add(new Label("Specialty:"), 0, 3);
-        grid.add(specialtyField, 1, 3);
+        grid.add(new Label("Profession:"), 0, 3);
+        grid.add(typeCombo, 1, 3);
 
-        grid.add(new Label("Rate (hr):"), 0, 4); // instead of "Rate:"
-        grid.add(rateField, 1, 4);
+        grid.add(new Label("Specialty/Knowledge:"), 0, 4);
+        grid.add(specialtyField, 1, 4);
 
-        grid.add(new Label("Hours Worked:"), 0, 5); // instead of "Hours/Week (Farmers only):"
-        grid.add(hoursSpinner, 1, 5);
+        grid.add(new Label("Emerald Rate (hr):"), 0, 5);
+        grid.add(rateField, 1, 5);
+
+        grid.add(new Label("Hours Worked:"), 0, 6);
+        grid.add(hoursSpinner, 1, 6);
 
         grid.setUserData(new Object[]{nameField, villageField, levelSpinner, rateField, hoursSpinner, typeCombo, specialtyField});
 
@@ -435,9 +474,8 @@ public class VillagerEMSController {
             String type = typeCombo.getValue();
             String specialty = specialtyField.getText().trim();
 
-            // Validation
             if (name.isEmpty() || village.isEmpty()) {
-                showAlert("Invalid Input", "Name and Village cannot be empty.");
+                showAlert("Invalid Input", "Villager Name and Village cannot be empty.");
                 return null;
             }
 
@@ -449,18 +487,29 @@ public class VillagerEMSController {
                 FarmerVillager farmer = new FarmerVillager(0, name, village, level, rate, specialty);
                 farmer.setHoursWorked(hours);
                 return farmer;
-            } else if ("Blacksmith".equals(type)) {
+            }
+            if ("Blacksmith".equals(type)) {
                 BlacksmithVillager blacksmith = new BlacksmithVillager(0, name, village, level, rate, hours, specialty);
                 return blacksmith;
             }
+            if ("Butcher".equals(type)) {
+                ButcherVillager butcher = new ButcherVillager(0, name, village, level, rate, hours, specialty);
+                return butcher;
+            }
+            if ("Cleric".equals(type)) {
+                ClericVillager cleric = new ClericVillager(0, name, village, level, rate, hours, specialty);
+                return cleric;
+            }
+            if ("Librarian".equals(type)) {
+                LibrarianVillager librarian = new LibrarianVillager(0, name, village, level, rate, hours, specialty);
+                return librarian;
+            }
         } catch (NumberFormatException e) {
-            showAlert("Invalid Input", "Please enter valid numbers for rate.");
+            showAlert("Invalid Input", "Please enter valid numbers for emerald rate.");
             return null;
         }
         return null;
     }
-
-    // Utility methods
 
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -471,35 +520,39 @@ public class VillagerEMSController {
     }
 
     private void updateStatistics() {
-        if (employees.isEmpty()) {
+        if (villagers.isEmpty()) {
             return;
         }
 
-        long farmers = employees.stream().filter(e -> e instanceof FarmerVillager).count();
-        long blacksmiths = employees.stream().filter(e -> e instanceof BlacksmithVillager).count();
-        double totalPayroll = employees.stream().mapToDouble(VillagerEmployee::computeSalary).sum();
+        long farmers = villagers.stream().filter(e -> e instanceof FarmerVillager).count();
+        long blacksmiths = villagers.stream().filter(e -> e instanceof BlacksmithVillager).count();
+        long butchers = villagers.stream().filter(e -> e instanceof ButcherVillager).count();
+        long clerics = villagers.stream().filter(e -> e instanceof ClericVillager).count();
+        long librarians = villagers.stream().filter(e -> e instanceof LibrarianVillager).count();
+        double totalEmeralds = villagers.stream().mapToDouble(VillagerEmployee::computeSalary).sum();
 
-        String stats = String.format("📊 Current Stats: %d Total (%d Farmers, %d Blacksmiths) | Payroll: $%.2f\n",
-                employees.size(), farmers, blacksmiths, totalPayroll);
+        String stats = String.format("📊 §aVillage Stats:§r %d Villagers (§2%d Farmers§r, §8%d Blacksmiths§r, §c%d Butchers§r, §5%d Clerics§r, §9%d Librarians§r) | §eEmeralds:§r 💎 %.2f\n",
+                villagers.size(), farmers, blacksmiths, butchers, clerics, librarians, totalEmeralds);
 
-        // Update or append statistics in report area
-        String currentText = reportArea.getText();
-        if (currentText.contains("📊 Current Stats:")) {
-            String[] lines = currentText.split("\n");
-            StringBuilder newText = new StringBuilder();
-            boolean replaced = false;
-            for (String line : lines) {
-                if (line.contains("📊 Current Stats:") && !replaced) {
+        // Remove previous stats line if present
+        StringBuilder newText = new StringBuilder();
+        boolean replaced = false;
+        for (javafx.scene.Node node : reportFlow.getChildren()) {
+            if (node instanceof Text) {
+                String text = ((Text) node).getText();
+                if (text.contains("📊 §aVillage Stats:") && !replaced) {
                     newText.append(stats);
                     replaced = true;
                 } else {
-                    newText.append(line).append("\n");
+                    newText.append(text);
                 }
             }
-            reportArea.setText(newText.toString());
-        } else {
-            reportArea.appendText(stats);
         }
+        if (!replaced) {
+            newText.append(stats);
+        }
+        reportFlow.getChildren().clear();
+        reportFlow.getChildren().add(new Text(newText.toString()));
     }
 
     private String getCurrentTimestamp() {
@@ -507,16 +560,58 @@ public class VillagerEMSController {
     }
 
     private void addSampleData() {
-        // Add sample villagers
         FarmerVillager farmer = new FarmerVillager(1001, "Bob the Farmer", "Oakville", 3, 15.0, "Wheat");
         farmer.setHoursWorked(40);
-        employees.add(farmer);
+        villagers.add(farmer);
 
-        BlacksmithVillager blacksmith = new BlacksmithVillager(1002, "Iron Mike", "Stonehaven", 5, 2500.0, "Weapons");
-        employees.add(blacksmith);
+        BlacksmithVillager blacksmith = new BlacksmithVillager(1002, "Iron Mike", "Stonehaven", 5, 2500.0, 40, "Weapons");
+        villagers.add(blacksmith);
 
-        reportArea.appendText("✅ Sample data loaded successfully!\n");
-        reportArea.appendText("   - Bob the Farmer (Level 3, Wheat specialty)\n");
-        reportArea.appendText("   - Iron Mike (Level 5, Weapons specialty)\n\n");
+        ButcherVillager butcher = new ButcherVillager(1003, "Chop Suey", "Meatville", 2, 18.0, 38, "Beef");
+        villagers.add(butcher);
+
+        ClericVillager cleric = new ClericVillager(1004, "Healer Joe", "Sanctuary", 4, 20.0, 40, "Healing");
+        villagers.add(cleric);
+
+        LibrarianVillager librarian = new LibrarianVillager(1005, "Booker T.", "Librarytown", 3, 19.0, 40, "History");
+        villagers.add(librarian);
+
+        reportFlow.getChildren().add(new Text("✅ §aSample villagers spawned in the village!§r\n"));
+        reportFlow.getChildren().add(new Text("   - Bob the Farmer (Lvl 3, Wheat)\n"));
+        reportFlow.getChildren().add(new Text("   - Iron Mike (Lvl 5, Weapons)\n"));
+        reportFlow.getChildren().add(new Text("   - Chop Suey (Lvl 2, Beef)\n"));
+        reportFlow.getChildren().add(new Text("   - Healer Joe (Lvl 4, Healing)\n"));
+        reportFlow.getChildren().add(new Text("   - Booker T. (Lvl 3, History)\n\n"));
+    }
+
+    private void appendLog(String title, String message, String type) {
+        Text header = new Text("\n" + type + " " + title + "\n");
+        header.setStyle("-fx-font-weight: bold; -fx-fill: #2e7d32;");
+
+        Text divider = new Text("----------------------------------------\n");
+        divider.setStyle("-fx-fill: #888;");
+
+        Text body = new Text(message + "\n");
+        body.setStyle("-fx-font-family: 'Courier New';");
+
+        Text footer = new Text("----------------------------------------\n");
+        footer.setStyle("-fx-fill: #888;");
+
+        reportFlow.getChildren().addAll(header, divider, body, footer);
+    }
+
+    @FXML
+    private void onCalculateSalary() {
+        VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("No Villager Selected", "Select a villager to calculate their salary.");
+            return;
+        }
+        double salary = selected.computeSalary();
+        String message = String.format(
+                "• Name: %s\n• Profession: %s\n• XP Level: %d\n• Salary: 💎 %.2f emeralds/month",
+                selected.getName(), selected.getProfession(), selected.getExperienceLevel(), salary
+        );
+        appendLog("Salary Calculation", message, "💰");
     }
 }

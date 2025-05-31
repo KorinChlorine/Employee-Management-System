@@ -1,44 +1,44 @@
 package com.example.villagerems;
 
-// ButcherVillager.java - Subclass
 public class ButcherVillager extends VillagerEmployee implements EmployeeActions {
-    private double dailyWage;
-    private int workDaysPerMonth;
-    private String meatSpecialty;
+    private double hourlyRate;
+    private int hoursWorked;
+    private String specialty;
     private int animalsProcessed;
 
     public ButcherVillager(int employeeId, String name, String village, int experienceLevel,
-                           double dailyWage, String meatSpecialty) {
+                           double hourlyRate, int hoursWorked, String specialty) {
         super(employeeId, name, village, experienceLevel);
-        this.dailyWage = dailyWage;
-        this.workDaysPerMonth = 22;
-        this.meatSpecialty = meatSpecialty;
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+        this.specialty = specialty;
         this.animalsProcessed = 0;
+    }
+
+    public ButcherVillager(int employeeId, String name, String village, int experienceLevel,
+                           double hourlyRate, String specialty) {
+        this(employeeId, name, village, experienceLevel, hourlyRate, 160, specialty);
     }
 
     @Override
     public double getMonthlyRate() {
-        return dailyWage * workDaysPerMonth;
+        return hourlyRate * hoursWorked;
     }
 
     @Override
     public String getSpecialty() {
-        return meatSpecialty;
+        return specialty;
     }
 
     @Override
-    public String getProfession() {
-        return "Butcher";
-    }
+    public String getProfession() { return "Butcher"; }
 
     @Override
-    public String getWorkstation() {
-        return "Smoker";
-    }
+    public String getWorkstation() { return "Smoker"; }
 
     @Override
     public double computeSalary() {
-        double baseSalary = dailyWage * workDaysPerMonth;
+        double baseSalary = hourlyRate * hoursWorked;
         double experienceBonus = baseSalary * (getExperienceLevel() * 0.11);
         double productionBonus = animalsProcessed * 12;
         return baseSalary + experienceBonus + productionBonus;
@@ -46,29 +46,29 @@ public class ButcherVillager extends VillagerEmployee implements EmployeeActions
 
     @Override
     public String submitReport() {
-        return getName() + " has processed " + animalsProcessed + " animals this month. " +
-                "Specialty: " + meatSpecialty + ". Food safety compliance: " +
+        return getName() + " from " + specialty + " department has processed " +
+                animalsProcessed + " animals this month. Food safety compliance: " +
                 (getExperienceLevel() * 22) + "%";
     }
 
     @Override
     public void levelUp() {
         setExperienceLevel(getExperienceLevel() + 1);
-        dailyWage += 15.0;
+        hourlyRate += 1.5;
     }
 
     @Override
     public String getJobDescription() {
-        return "Processes meat and specializes in " + meatSpecialty + " for village food supply.";
+        return "Processes meat and specializes in " + specialty + " for village food supply.";
     }
 
     // Getters and Setters
-    public double getDailyWage() { return dailyWage; }
-    public void setDailyWage(double dailyWage) { this.dailyWage = dailyWage; }
-    public int getWorkDaysPerMonth() { return workDaysPerMonth; }
-    public void setWorkDaysPerMonth(int workDaysPerMonth) { this.workDaysPerMonth = workDaysPerMonth; }
-    public String getMeatSpecialty() { return meatSpecialty; }
-    public void setMeatSpecialty(String meatSpecialty) { this.meatSpecialty = meatSpecialty; }
+    public double getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(double hourlyRate) { this.hourlyRate = hourlyRate; }
+    public int getHoursWorked() { return hoursWorked; }
+    public void setHoursWorked(int hoursWorked) { this.hoursWorked = hoursWorked; }
+    public String getSpecialtyField() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public int getAnimalsProcessed() { return animalsProcessed; }
     public void setAnimalsProcessed(int animalsProcessed) { this.animalsProcessed = animalsProcessed; }
 }

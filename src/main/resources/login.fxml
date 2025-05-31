@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<StackPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+           style="-fx-background-color: #f0f2f5;"
+           fx:controller="com.example.villagerems.LoginController">
+    <VBox spacing="15" alignment="CENTER" maxWidth="320"
+          style="-fx-background-color: white; -fx-padding: 32; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, #888, 8, 0, 0, 2);">
+        <Label text="Login" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+        <TextField fx:id="usernameField" promptText="Username" minWidth="220"/>
+        <PasswordField fx:id="passwordField" promptText="Password" minWidth="220"/>
+        <Button text="Login" onAction="#onLogin" maxWidth="220" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+        <Button text="Register" onAction="#onShowRegister" maxWidth="220" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+        <Label fx:id="errorLabel" textFill="red"/>
+    </VBox>
+</StackPane>
