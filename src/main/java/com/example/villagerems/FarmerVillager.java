@@ -1,10 +1,13 @@
 package com.example.villagerems;
 
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ThreadLocalRandom;
 // FarmerVillager.java - Subclass
 public class FarmerVillager extends VillagerEmployee implements EmployeeActions {
     private double hourlyRate;
     private int hoursWorked;
     private String cropSpecialty;
+    private int cropsHarvested;
 
     public FarmerVillager(int employeeId, String name, String village, int experienceLevel,
                           double hourlyRate, String cropSpecialty) {
@@ -12,6 +15,7 @@ public class FarmerVillager extends VillagerEmployee implements EmployeeActions 
         this.hourlyRate = hourlyRate;
         this.cropSpecialty = cropSpecialty;
         this.hoursWorked = 160; // Default monthly hours
+        this.cropsHarvested = ThreadLocalRandom.current().nextInt(5, 11);
     }
 
     @Override
@@ -42,8 +46,8 @@ public class FarmerVillager extends VillagerEmployee implements EmployeeActions 
 
     @Override
     public String submitReport() {
-        return getName() + " has harvested " + cropSpecialty + " crops this month. " +
-                "Yield: " + (getExperienceLevel() * 200) + " units.";
+        return getName() + " has harvested " + cropsHarvested + " " + cropSpecialty +
+                " crops this month. Yield: " + (getExperienceLevel() * 200) + " units.";
     }
 
     @Override
@@ -64,4 +68,6 @@ public class FarmerVillager extends VillagerEmployee implements EmployeeActions 
     public void setHoursWorked(int hoursWorked) { this.hoursWorked = hoursWorked; }
     public String getCropSpecialty() { return cropSpecialty; }
     public void setCropSpecialty(String cropSpecialty) { this.cropSpecialty = cropSpecialty; }
+    public int getCropsHarvested() { return cropsHarvested; }
+    public void setCropsHarvested(int cropsHarvested) { this.cropsHarvested = cropsHarvested; }
 }

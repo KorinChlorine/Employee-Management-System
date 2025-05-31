@@ -9,4 +9,5 @@ public interface EmployeeActions {
     void setEmployeeId(int id);
     double getMonthlyRate();
     String getSpecialty();
+    String getWorkstation();
 }

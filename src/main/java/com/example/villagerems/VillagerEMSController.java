@@ -38,6 +38,7 @@ public class VillagerEMSController {
     @FXML private TableColumn<VillagerEmployee, String> typeColumn;
     @FXML private TextFlow reportFlow;
     @FXML private TextField searchField;
+    @FXML private TableColumn<VillagerEmployee, String> workstationColumn;
 
     private ObservableList<VillagerEmployee> villagers = FXCollections.observableArrayList();
     private int nextId = 1006;
@@ -48,6 +49,7 @@ public class VillagerEMSController {
         employeeTable.setItems(villagers);
         addSampleData();
         initializeReportArea();
+        updateStatistics();
         employeeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
             updateSidebar(newSel);
             villagerImage.setPreserveRatio(true);
@@ -75,6 +77,12 @@ public class VillagerEMSController {
         typeColumn.setCellValueFactory(cellData -> {
             VillagerEmployee emp = cellData.getValue();
             return new javafx.beans.property.SimpleStringProperty(emp.getProfession());
+        });
+        workstationColumn.setCellValueFactory(cellData -> {
+            VillagerEmployee emp = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                    emp instanceof EmployeeActions ? ((EmployeeActions) emp).getWorkstation() : "N/A"
+            );
         });
 
         salaryColumn.setCellFactory(column -> new TableCell<VillagerEmployee, Double>() {
@@ -353,13 +361,18 @@ public class VillagerEMSController {
 
     @FXML
     private void onGenerateReport() {
+        reportFlow.getChildren().clear();
+        initializeReportArea();
+        updateStatistics();
         appendWorkforceReport(villagers);
     }
 
     @FXML
     private void onRefresh() {
-        employeeTable.refresh();
+        reportFlow.getChildren().clear();
+        initializeReportArea();
         updateStatistics();
+        employeeTable.refresh();
         appendLog(
                 "Table Refreshed",
                 String.format("Refreshed at: %s", getCurrentTimestamp()),
@@ -383,35 +396,52 @@ public class VillagerEMSController {
     }
 
     private void appendWorkforceReport(ObservableList<VillagerEmployee> villagers) {
-        Text header = new Text("\n📊 Workforce Report\n");
-        header.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-fill: #1976D2;");
-
-        Text divider = new Text("----------------------------------------\n");
-        divider.setStyle("-fx-fill: #90A4AE;");
-
         StringBuilder report = new StringBuilder();
+        String divider = "----------------------------------------\n";
         for (VillagerEmployee v : villagers) {
-            String specialty = "";
+            String specialty;
             if (v instanceof FarmerVillager) {
-                specialty = "Crop: " + ((FarmerVillager) v).getCropSpecialty();
+                specialty = String.format("Crop Specialty   : %s", ((FarmerVillager) v).getCropSpecialty());
             } else if (v instanceof BlacksmithVillager) {
-                specialty = "Specialty: " + ((BlacksmithVillager) v).getSpecialty();
+                specialty = String.format("Specialty        : %s", ((BlacksmithVillager) v).getSpecialty());
             } else if (v instanceof ButcherVillager) {
-                specialty = "Specialty: " + ((ButcherVillager) v).getSpecialty();
+                specialty = String.format("Specialty        : %s", ((ButcherVillager) v).getSpecialty());
             } else if (v instanceof ClericVillager) {
-                specialty = "Specialty: " + ((ClericVillager) v).getSpecialty();
+                specialty = String.format("Specialty        : %s", ((ClericVillager) v).getSpecialty());
             } else if (v instanceof LibrarianVillager) {
-                specialty = "Knowledge: " + ((LibrarianVillager) v).getKnowledgeArea();
+                specialty = String.format("Knowledge Area   : %s", ((LibrarianVillager) v).getKnowledgeArea());
+            } else {
+                specialty = "Specialty        : N/A";
             }
+            String workstation = (v instanceof EmployeeActions)
+                    ? ((EmployeeActions) v).getWorkstation()
+                    : "N/A";
+            String reportLine = (v instanceof EmployeeActions)
+                    ? ((EmployeeActions) v).submitReport()
+                    : "N/A";
             report.append(String.format(
-                    "• %s (%s)\n   - Village: %s\n   - Level: %d\n   - %s\n   - Salary: 💎 %.2f\n\n",
-                    v.getName(), v.getProfession(), v.getVillage(), v.getExperienceLevel(), specialty, v.computeSalary()
+                    "• Name           : %-18s\n"
+                            + "  Profession     : %-10s\n"
+                            + "  Village        : %-15s\n"
+                            + "  Level          : %-2d\n"
+                            + "  %-25s\n"
+                            + "  Salary         : 💎 %8.2f\n"
+                            + "  Workstation    : %-18s\n"
+                            + "  Report         : %s\n%s",
+                    v.getName(),
+                    v.getProfession(),
+                    v.getVillage(),
+                    v.getExperienceLevel(),
+                    specialty,
+                    v.computeSalary(),
+                    workstation,
+                    reportLine,
+                    divider
             ));
         }
         Text body = new Text(report.toString());
         body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
-
-        reportFlow.getChildren().addAll(header, divider, body, divider);
+        reportFlow.getChildren().add(body);
     }
 
     private Dialog<VillagerEmployee> createAddVillagerDialog() {
@@ -456,21 +486,64 @@ public class VillagerEMSController {
         return dialog;
     }
 
+    // In VillagerEMSController.java
+
     private GridPane createVillagerForm(VillagerEmployee villager) {
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
+        grid.setHgap(16);
+        grid.setVgap(14);
+        grid.setPadding(new Insets(24, 40, 18, 24));
+        grid.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #bdbdbd; -fx-border-radius: 8; -fx-background-radius: 8;");
 
+        // Section header
+        Label section = new Label("Villager Details");
+        section.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #388E3C;");
+        grid.add(section, 0, 0, 2, 1);
+
+        // Fields
+        Label nameLabel = new Label("Villager Name:");
+        nameLabel.setMinWidth(140);
         TextField nameField = new TextField();
+        nameField.setPromptText("e.g. Bob");
+        nameField.setTooltip(new Tooltip("Enter the villager's name"));
+
+        Label villageLabel = new Label("Village:");
+        villageLabel.setMinWidth(140);
         TextField villageField = new TextField();
+        villageField.setPromptText("e.g. Plains");
+        villageField.setTooltip(new Tooltip("Enter the village name"));
+
+        Label levelLabel = new Label("XP Level:");
+        levelLabel.setMinWidth(140);
         Spinner<Integer> levelSpinner = new Spinner<>(1, 10, 1);
-        TextField rateField = new TextField();
-        Spinner<Integer> hoursSpinner = new Spinner<>(20, 60, 40);
+        levelSpinner.setEditable(true);
+        levelSpinner.setTooltip(new Tooltip("Villager experience level (1-10)"));
+
+        Label typeLabel = new Label("Profession:");
+        typeLabel.setMinWidth(140);
         ComboBox<String> typeCombo = new ComboBox<>();
         typeCombo.getItems().addAll("Farmer", "Blacksmith", "Butcher", "Cleric", "Librarian");
-        TextField specialtyField = new TextField();
+        typeCombo.setTooltip(new Tooltip("Select the villager's profession"));
 
+        Label specialtyLabel = new Label("Specialty/Knowledge:");
+        specialtyLabel.setMinWidth(140);
+        TextField specialtyField = new TextField();
+        specialtyField.setPromptText("e.g. Wheat, Tools, Potions");
+        specialtyField.setTooltip(new Tooltip("Enter specialty or knowledge area"));
+
+        Label rateLabel = new Label("Emerald Rate (hr):");
+        rateLabel.setMinWidth(140);
+        TextField rateField = new TextField();
+        rateField.setPromptText("e.g. 15.0");
+        rateField.setTooltip(new Tooltip("Hourly emerald rate (numeric)"));
+
+        Label hoursLabel = new Label("Hours Worked:");
+        hoursLabel.setMinWidth(140);
+        Spinner<Integer> hoursSpinner = new Spinner<>(20, 60, 40);
+        hoursSpinner.setEditable(true);
+        hoursSpinner.setTooltip(new Tooltip("Hours worked per month (20-60)"));
+
+        // Populate fields if editing
         if (villager != null) {
             nameField.setText(villager.getName());
             villageField.setText(villager.getVillage());
@@ -513,29 +586,16 @@ public class VillagerEMSController {
             specialtyField.setText("Wheat");
         }
 
-        grid.add(new Label("Villager Name:"), 0, 0);
-        grid.add(nameField, 1, 0);
-
-        grid.add(new Label("Village:"), 0, 1);
-        grid.add(villageField, 1, 1);
-
-        grid.add(new Label("XP Level:"), 0, 2);
-        grid.add(levelSpinner, 1, 2);
-
-        grid.add(new Label("Profession:"), 0, 3);
-        grid.add(typeCombo, 1, 3);
-
-        grid.add(new Label("Specialty/Knowledge:"), 0, 4);
-        grid.add(specialtyField, 1, 4);
-
-        grid.add(new Label("Emerald Rate (hr):"), 0, 5);
-        grid.add(rateField, 1, 5);
-
-        grid.add(new Label("Hours Worked:"), 0, 6);
-        grid.add(hoursSpinner, 1, 6);
+        // Add to grid
+        grid.add(nameLabel, 0, 1);      grid.add(nameField, 1, 1);
+        grid.add(villageLabel, 0, 2);   grid.add(villageField, 1, 2);
+        grid.add(levelLabel, 0, 3);     grid.add(levelSpinner, 1, 3);
+        grid.add(typeLabel, 0, 4);      grid.add(typeCombo, 1, 4);
+        grid.add(specialtyLabel, 0, 5); grid.add(specialtyField, 1, 5);
+        grid.add(rateLabel, 0, 6);      grid.add(rateField, 1, 6);
+        grid.add(hoursLabel, 0, 7);     grid.add(hoursSpinner, 1, 7);
 
         grid.setUserData(new Object[]{nameField, villageField, levelSpinner, rateField, hoursSpinner, typeCombo, specialtyField});
-
         return grid;
     }
 

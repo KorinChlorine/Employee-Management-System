@@ -1,5 +1,5 @@
 package com.example.villagerems;
-
+import java.util.concurrent.ThreadLocalRandom;
 public class LibrarianVillager extends VillagerEmployee implements EmployeeActions {
     private double hourlyRate;
     private int hoursWorked;
@@ -13,8 +13,8 @@ public class LibrarianVillager extends VillagerEmployee implements EmployeeActio
         this.hourlyRate = hourlyRate;
         this.hoursWorked = hoursWorked;
         this.knowledgeArea = knowledgeArea;
-        this.booksManaged = 0;
-        this.lecturesGiven = 0;
+        this.booksManaged = ThreadLocalRandom.current().nextInt(5, 11);
+        this.lecturesGiven = ThreadLocalRandom.current().nextInt(5, 11);
     }
 
     public LibrarianVillager(int employeeId, String name, String village, int experienceLevel,

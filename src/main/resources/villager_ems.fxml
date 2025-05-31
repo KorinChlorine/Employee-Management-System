@@ -57,6 +57,7 @@
                             <TableColumn fx:id="levelColumn" prefWidth="60.0" text="Level" />
                             <TableColumn fx:id="salaryColumn" prefWidth="120.0" text="Salary" />
                             <TableColumn fx:id="typeColumn" prefWidth="100.0" text="Type" />
+                            <TableColumn fx:id="workstationColumn" prefWidth="120.0" text="Workstation" />
                         </columns>
                     </TableView>
                 </VBox>
