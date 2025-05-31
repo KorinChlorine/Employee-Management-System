@@ -455,6 +455,15 @@ public class VillagerEMSController {
         GridPane grid = createVillagerForm(null);
         dialog.getDialogPane().setContent(grid);
 
+        // Modern background for the whole dialog
+        dialog.getDialogPane().setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #f5f7fa, #c3cfe2);" +
+                        "-fx-border-color: #bdbdbd;" +
+                        "-fx-border-radius: 12;" +
+                        "-fx-background-radius: 12;" +
+                        "-fx-effect: dropshadow(gaussian, #bdbdbd, 12, 0.2, 2, 2);"
+        );
+
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
                 return extractVillagerFromForm(grid);
@@ -476,6 +485,15 @@ public class VillagerEMSController {
         GridPane grid = createVillagerForm(villager);
         dialog.getDialogPane().setContent(grid);
 
+        // Modern background for the whole dialog
+        dialog.getDialogPane().setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #f5f7fa, #c3cfe2);" +
+                        "-fx-border-color: #bdbdbd;" +
+                        "-fx-border-radius: 12;" +
+                        "-fx-background-radius: 12;" +
+                        "-fx-effect: dropshadow(gaussian, #bdbdbd, 12, 0.2, 2, 2);"
+        );
+
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
                 return extractVillagerFromForm(grid);
@@ -485,8 +503,6 @@ public class VillagerEMSController {
 
         return dialog;
     }
-
-    // In VillagerEMSController.java
 
     private GridPane createVillagerForm(VillagerEmployee villager) {
         GridPane grid = new GridPane();

@@ -5,17 +5,24 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.TextFlow?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.villagerems.VillagerEMSController"
-            prefWidth="1280" prefHeight="720">
+            prefWidth="1280" prefHeight="720"
+            style="-fx-background-color: linear-gradient(to bottom, #f5f7fa, #c3cfe2);">
     <top>
-        <VBox spacing="10">
+        <VBox spacing="10" alignment="CENTER"
+              style="-fx-background-color: linear-gradient(to bottom, #f5f7fa, #c3cfe2);">
             <padding>
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
             </padding>
-            <Label style="-fx-font-size: 20px; -fx-font-weight: bold;" text="🏘️ Minecraft Villager Employee Management System" />
-            <HBox spacing="10">
+            <ImageView fitHeight="48" preserveRatio="true">
+                <image>
+                    <Image url="@Title.png" />
+                </image>
+            </ImageView>
+            <HBox spacing="10" alignment="CENTER">
                 <Button onAction="#onAddVillager" prefWidth="120" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="➕ Add Villager" />
                 <Button onAction="#onEditVillager" prefWidth="120" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="✏️ Edit Villager" />
                 <Button onAction="#onDeleteVillager" prefWidth="120" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="❌ Remove" />
