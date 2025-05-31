@@ -6,7 +6,6 @@ public class BlacksmithVillager extends VillagerEmployee implements EmployeeActi
     private String specialty;
     private int itemsCrafted;
 
-    // 7-argument constructor
     public BlacksmithVillager(int employeeId, String name, String village, int experienceLevel,
                               double hourlyRate, int hoursWorked, String specialty) {
         super(employeeId, name, village, experienceLevel);
@@ -16,7 +15,6 @@ public class BlacksmithVillager extends VillagerEmployee implements EmployeeActi
         this.itemsCrafted = 0;
     }
 
-    // 6-argument constructor (defaults hoursWorked to 160)
     public BlacksmithVillager(int employeeId, String name, String village, int experienceLevel,
                               double hourlyRate, String specialty) {
         this(employeeId, name, village, experienceLevel, hourlyRate, 160, specialty);

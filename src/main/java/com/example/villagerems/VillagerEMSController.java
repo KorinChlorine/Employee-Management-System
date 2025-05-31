@@ -391,23 +391,26 @@ public class VillagerEMSController {
             specialtyField.setText("Wheat");
         }
 
-        // Add fields to grid
+// Inside createVillagerForm or similar method in VillagerEMSController.java
+
         grid.add(new Label("Name:"), 0, 0);
         grid.add(nameField, 1, 0);
+
         grid.add(new Label("Village:"), 0, 1);
         grid.add(villageField, 1, 1);
-        grid.add(new Label("Experience Level:"), 0, 2);
-        grid.add(levelSpinner, 1, 2);
-        grid.add(new Label("Type:"), 0, 3);
-        grid.add(typeCombo, 1, 3);
-        grid.add(new Label("Rate ($/hr or $/month):"), 0, 4);
-        grid.add(rateField, 1, 4);
-        grid.add(new Label("Hours/Week (Farmers only):"), 0, 5);
-        grid.add(hoursSpinner, 1, 5);
-        grid.add(new Label("Specialty/Crop:"), 0, 6);
-        grid.add(specialtyField, 1, 6);
 
-        // Store fields in grid for later retrieval
+        grid.add(new Label("Level:"), 0, 2);
+        grid.add(levelSpinner, 1, 2);
+
+        grid.add(new Label("Specialty:"), 0, 3);
+        grid.add(specialtyField, 1, 3);
+
+        grid.add(new Label("Rate (hr):"), 0, 4); // instead of "Rate:"
+        grid.add(rateField, 1, 4);
+
+        grid.add(new Label("Hours Worked:"), 0, 5); // instead of "Hours/Week (Farmers only):"
+        grid.add(hoursSpinner, 1, 5);
+
         grid.setUserData(new Object[]{nameField, villageField, levelSpinner, rateField, hoursSpinner, typeCombo, specialtyField});
 
         return grid;
@@ -442,13 +445,13 @@ public class VillagerEMSController {
                 specialty = "Farmer".equals(type) ? "Wheat" : "Tools";
             }
 
-            // Create appropriate villager type
             if ("Farmer".equals(type)) {
                 FarmerVillager farmer = new FarmerVillager(0, name, village, level, rate, specialty);
                 farmer.setHoursWorked(hours);
                 return farmer;
             } else if ("Blacksmith".equals(type)) {
-                return new BlacksmithVillager(0, name, village, level, rate, specialty);
+                BlacksmithVillager blacksmith = new BlacksmithVillager(0, name, village, level, rate, hours, specialty);
+                return blacksmith;
             }
         } catch (NumberFormatException e) {
             showAlert("Invalid Input", "Please enter valid numbers for rate.");
