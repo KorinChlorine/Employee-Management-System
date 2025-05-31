@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.effect.DropShadow?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:id="mainLayout"
+            fx:controller="com.example.villagerems.VillagerEMSController"
+            prefWidth="1000" prefHeight="700"
+            style="-fx-background-color: linear-gradient(to bottom right, #f5f5dc, #deb887);">
+
+    <!-- Top Header -->
+    <top>
+        <VBox alignment="CENTER">
+            <padding><Insets top="20" bottom="10"/></padding>
+            <Label text="🏘️ Village Employee Management System">
+                <font><Font name="Arial Black" size="26"/></font>
+                <textFill><Color fx:constant="DARKGREEN"/></textFill>
+                <effect><DropShadow/></effect>
+            </Label>
+            <Separator />
+        </VBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <VBox spacing="15" alignment="TOP_CENTER">
+            <padding><Insets top="20" right="30" bottom="20" left="30"/></padding>
+
+            <!-- Button Panel -->
+            <HBox spacing="12" alignment="CENTER">
+                <children>
+                    <Button text="➕ Add" fx:id="addButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="✏️ Edit" fx:id="editButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="❌ Remove" fx:id="deleteButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="💰 Salary" fx:id="salaryButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="📊 Report" fx:id="reportButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="⬆️ Level Up" fx:id="levelUpButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                    <Button text="🔄 Refresh" fx:id="refreshButton" style="-fx-background-radius: 10; -fx-font-weight: bold;"/>
+                </children>
+            </HBox>
+
+            <!-- TableView for Employees -->
+            <TableView fx:id="employeeTable" prefHeight="320" style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #6b4c3b;">
+                <columns>
+                    <TableColumn fx:id="idCol" text="ID"/>
+                    <TableColumn fx:id="nameCol" text="Name"/>
+                    <TableColumn fx:id="professionCol" text="Profession"/>
+                    <TableColumn fx:id="villageCol" text="Village"/>
+                    <TableColumn fx:id="levelCol" text="Level"/>
+                    <TableColumn fx:id="workstationCol" text="Workstation"/>
+                </columns>
+            </TableView>
+
+            <!-- Report Area -->
+            <VBox spacing="5" alignment="TOP_LEFT">
+                <Label text="📋 Reports &amp; Information:" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <TextArea fx:id="reportArea"
+                          editable="false"
+                          wrapText="true"
+                          prefRowCount="8"
+                          style="-fx-font-family: 'Consolas'; -fx-font-size: 13px; -fx-background-radius: 10;"/>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>
