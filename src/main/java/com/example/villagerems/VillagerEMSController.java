@@ -1,4 +1,5 @@
 package com.example.villagerems;
+
 import javafx.scene.layout.VBox;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
@@ -19,7 +20,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 public class VillagerEMSController {
     @FXML private VBox sidebar;
@@ -29,28 +29,134 @@ public class VillagerEMSController {
     @FXML private Label villagerVillage;
     @FXML private Label villagerLevel;
     @FXML private Label villagerSpecialty;
-    @FXML
-    private TableView<VillagerEmployee> employeeTable;
-    @FXML
-    private TableColumn<VillagerEmployee, Integer> idColumn;
-    @FXML
-    private TableColumn<VillagerEmployee, String> nameColumn;
-    @FXML
-    private TableColumn<VillagerEmployee, String> villageColumn;
-    @FXML
-    private TableColumn<VillagerEmployee, Integer> levelColumn;
-    @FXML
-    private TableColumn<VillagerEmployee, Double> salaryColumn;
-    @FXML
-    private TableColumn<VillagerEmployee, String> typeColumn;
-    @FXML
-    private TextFlow reportFlow;
+    @FXML private TableView<VillagerEmployee> employeeTable;
+    @FXML private TableColumn<VillagerEmployee, Integer> idColumn;
+    @FXML private TableColumn<VillagerEmployee, String> nameColumn;
+    @FXML private TableColumn<VillagerEmployee, String> villageColumn;
+    @FXML private TableColumn<VillagerEmployee, Integer> levelColumn;
+    @FXML private TableColumn<VillagerEmployee, Double> salaryColumn;
+    @FXML private TableColumn<VillagerEmployee, String> typeColumn;
+    @FXML private TextFlow reportFlow;
+    @FXML private TextField searchField;
 
     private ObservableList<VillagerEmployee> villagers = FXCollections.observableArrayList();
     private int nextId = 1006;
 
     @FXML
-    private TextField searchField;
+    public void initialize() {
+        setupTableColumns();
+        employeeTable.setItems(villagers);
+        addSampleData();
+        initializeReportArea();
+        employeeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+            updateSidebar(newSel);
+            villagerImage.setPreserveRatio(true);
+            villagerImage.setFitWidth(180);
+            villagerImage.setFitHeight(240);
+        });
+    }
+
+    private void setupTableColumns() {
+        idColumn.setText("Villager ID");
+        nameColumn.setText("Villager Name");
+        villageColumn.setText("Village");
+        levelColumn.setText("XP Level");
+        salaryColumn.setText("Emeralds/Month");
+        typeColumn.setText("Profession");
+
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        villageColumn.setCellValueFactory(new PropertyValueFactory<>("village"));
+        levelColumn.setCellValueFactory(new PropertyValueFactory<>("experienceLevel"));
+        salaryColumn.setCellValueFactory(cellData -> {
+            VillagerEmployee emp = cellData.getValue();
+            return new javafx.beans.property.SimpleDoubleProperty(emp.computeSalary()).asObject();
+        });
+        typeColumn.setCellValueFactory(cellData -> {
+            VillagerEmployee emp = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(emp.getProfession());
+        });
+
+        salaryColumn.setCellFactory(column -> new TableCell<VillagerEmployee, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("💎 " + String.format("%.2f", item));
+                }
+            }
+        });
+    }
+
+    private void addSampleData() {
+        villagers.addAll(
+                new FarmerVillager(nextId++, "Bob", "Plains", 3, 15.0, "Wheat"),
+                new BlacksmithVillager(nextId++, "Anna", "Mountains", 4, 20.0, 40, "Tools"),
+                new ButcherVillager(nextId++, "Greg", "Savanna", 2, 12.0, 35, "Meat"),
+                new ClericVillager(nextId++, "Sister May", "Swamp", 5, 18.0, 38, "Potions"),
+                new LibrarianVillager(nextId++, "Eve", "Taiga", 6, 16.0, 40, "Enchantments")
+        );
+    }
+
+    private void initializeReportArea() {
+        reportFlow.getChildren().clear();
+
+        Text welcome = new Text("📜 Welcome to the Minecraft Village Workforce Ledger\n");
+        welcome.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-fill: #388E3C;");
+        reportFlow.getChildren().add(welcome);
+
+        Text divider = new Text("========================================\n");
+        divider.setStyle("-fx-fill: #BDBDBD;");
+        reportFlow.getChildren().add(divider);
+
+        if (villagers.isEmpty()) {
+            Text noVillagers = new Text("\nNo villagers registered yet. Use the buttons above to recruit!\n");
+            noVillagers.setStyle("-fx-font-style: italic; -fx-fill: #888;");
+            reportFlow.getChildren().add(noVillagers);
+        }
+
+        Text bootTime = new Text("\n⏰ System booted at: " + getCurrentTimestamp() + "\n");
+        bootTime.setStyle("-fx-fill: #555;");
+        reportFlow.getChildren().add(bootTime);
+
+        Text endDivider = new Text("========================================\n\n");
+        endDivider.setStyle("-fx-fill: #BDBDBD;");
+        reportFlow.getChildren().add(endDivider);
+    }
+
+    private void updateSidebar(VillagerEmployee villager) {
+        if (villager == null) {
+            sidebar.setVisible(false);
+            return;
+        }
+        sidebar.setVisible(true);
+        villagerName.setText(villager.getName());
+        villagerType.setText("Type: " + villager.getProfession());
+        villagerVillage.setText("Village: " + villager.getVillage());
+        villagerLevel.setText("XP Level: " + villager.getExperienceLevel());
+
+        if (villager instanceof FarmerVillager) {
+            villagerSpecialty.setText("Crop: " + ((FarmerVillager) villager).getCropSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Farmer.png")));
+        } else if (villager instanceof BlacksmithVillager) {
+            villagerSpecialty.setText("Specialty: " + ((BlacksmithVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Blacksmith.png")));
+        } else if (villager instanceof ButcherVillager) {
+            villagerSpecialty.setText("Specialty: " + ((ButcherVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Butcher.png")));
+        } else if (villager instanceof ClericVillager) {
+            villagerSpecialty.setText("Specialty: " + ((ClericVillager) villager).getSpecialty());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Cleric.png")));
+        } else if (villager instanceof LibrarianVillager) {
+            villagerSpecialty.setText("Knowledge: " + ((LibrarianVillager) villager).getKnowledgeArea());
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Librarian.png")));
+        } else {
+            villagerSpecialty.setText("");
+            villagerImage.setImage(null);
+        }
+    }
 
     @FXML
     private void onSearchVillager() {
@@ -109,153 +215,6 @@ public class VillagerEMSController {
         return sb.toString();
     }
 
-    @FXML
-    public void initialize() {
-        setupTableColumns();
-        employeeTable.setItems(villagers);
-        initializeReportArea();
-        addSampleData();
-        updateStatistics();
-        employeeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
-            updateSidebar(newSel);
-
-            villagerImage.setPreserveRatio(true);
-            villagerImage.setFitWidth(180);   // Adjust as needed
-            villagerImage.setFitHeight(240);  // Adjust as needed for vertical space
-        });
-    }
-    private void updateSidebar(VillagerEmployee villager) {
-        if (villager == null) {
-            sidebar.setVisible(false);
-            return;
-        }
-        sidebar.setVisible(true);
-        villagerName.setText(villager.getName());
-        villagerType.setText("Type: " + villager.getProfession());
-        villagerVillage.setText("Village: " + villager.getVillage());
-        villagerLevel.setText("XP Level: " + villager.getExperienceLevel());
-
-
-        if (villager instanceof FarmerVillager) {
-            villagerSpecialty.setText("Crop: " + ((FarmerVillager) villager).getCropSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Farmer.png")));
-        } else if (villager instanceof BlacksmithVillager) {
-            villagerSpecialty.setText("Specialty: " + ((BlacksmithVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Blacksmith.png")));
-        } else if (villager instanceof ButcherVillager) {
-            villagerSpecialty.setText("Specialty: " + ((ButcherVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Butcher.png")));
-        } else if (villager instanceof ClericVillager) {
-            villagerSpecialty.setText("Specialty: " + ((ClericVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Cleric.png")));
-        } else if (villager instanceof LibrarianVillager) {
-            villagerSpecialty.setText("Knowledge: " + ((LibrarianVillager) villager).getKnowledgeArea());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Librarian.png")));
-        } else {
-            villagerSpecialty.setText("");
-            villagerImage.setImage(null);
-        }
-    }
-
-    private void initializeReportArea() {
-        reportFlow.getChildren().clear();
-
-        // Welcome header
-        Text welcome = new Text("📜 Welcome to the Minecraft Village Workforce Ledger\n");
-        welcome.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-fill: #388E3C;");
-        reportFlow.getChildren().add(welcome);
-
-        // Divider
-        Text divider = new Text("========================================\n");
-        divider.setStyle("-fx-fill: #BDBDBD;");
-        reportFlow.getChildren().add(divider);
-
-        // Initial stats line
-        String stats = String.format(
-                "📊 Village Stats:\n" +
-                        "   • Villagers: 0\n" +
-                        "   • Farmers: 0\n" +
-                        "   • Blacksmiths: 0\n" +
-                        "   • Butchers: 0\n" +
-                        "   • Clerics: 0\n" +
-                        "   • Librarians: 0\n" +
-                        "   • Emeralds: 💎 0.00\n"
-        );
-        Text statsText = new Text(stats);
-        statsText.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px; -fx-fill: #333;");
-        reportFlow.getChildren().add(statsText);
-
-        // No villagers message
-        Text noVillagers = new Text("\nNo villagers registered yet. Use the buttons above to recruit!\n");
-        noVillagers.setStyle("-fx-font-style: italic; -fx-fill: #888;");
-        reportFlow.getChildren().add(noVillagers);
-
-        // Boot time
-        Text bootTime = new Text("\n⏰ System booted at: " + getCurrentTimestamp() + "\n");
-        bootTime.setStyle("-fx-fill: #555;");
-        reportFlow.getChildren().add(bootTime);
-
-        // End divider
-        Text endDivider = new Text("========================================\n\n");
-        endDivider.setStyle("-fx-fill: #BDBDBD;");
-        reportFlow.getChildren().add(endDivider);
-    }
-
-
-
-    private void setupTableColumns() {
-        idColumn.setText("Villager ID");
-        nameColumn.setText("Villager Name");
-        villageColumn.setText("Village");
-        levelColumn.setText("XP Level");
-        salaryColumn.setText("Emeralds/Month");
-        typeColumn.setText("Profession");
-
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        villageColumn.setCellValueFactory(new PropertyValueFactory<>("village"));
-        levelColumn.setCellValueFactory(new PropertyValueFactory<>("experienceLevel"));
-        salaryColumn.setCellValueFactory(cellData -> {
-            VillagerEmployee emp = cellData.getValue();
-            return new javafx.beans.property.SimpleDoubleProperty(emp.computeSalary()).asObject();
-        });
-        typeColumn.setCellValueFactory(cellData -> {
-            VillagerEmployee emp = cellData.getValue();
-            return new javafx.beans.property.SimpleStringProperty(emp.getProfession());
-        });
-
-        salaryColumn.setCellFactory(column -> new TableCell<VillagerEmployee, Double>() {
-            @Override
-            protected void updateItem(Double item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText("💎 " + String.format("%.2f", item));
-                }
-            }
-        });
-    }
-    private Dialog<VillagerEmployee> createAddVillagerDialog() {
-        Dialog<VillagerEmployee> dialog = new Dialog<>();
-        dialog.setTitle("Add Villager");
-        dialog.setHeaderText("Enter new villager details:");
-
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
-
-        GridPane grid = createVillagerForm(null); // Pass null for a blank form
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                return extractVillagerFromForm(grid);
-            }
-            return null;
-        });
-
-        return dialog;
-    }
     @FXML
     private void onAddVillager() {
         Dialog<VillagerEmployee> dialog = createAddVillagerDialog();
@@ -408,6 +367,21 @@ public class VillagerEMSController {
         );
     }
 
+    @FXML
+    private void onCalculateSalary() {
+        VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("No Villager Selected", "Select a villager to calculate their salary.");
+            return;
+        }
+        double salary = selected.computeSalary();
+        String message = String.format(
+                "• Name: %s\n• Profession: %s\n• XP Level: %d\n• Salary: 💎 %.2f emeralds/month",
+                selected.getName(), selected.getProfession(), selected.getExperienceLevel(), salary
+        );
+        appendLog("Salary Calculation", message, "💰");
+    }
+
     private void appendWorkforceReport(ObservableList<VillagerEmployee> villagers) {
         Text header = new Text("\n📊 Workforce Report\n");
         header.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-fill: #1976D2;");
@@ -438,6 +412,27 @@ public class VillagerEMSController {
         body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
 
         reportFlow.getChildren().addAll(header, divider, body, divider);
+    }
+
+    private Dialog<VillagerEmployee> createAddVillagerDialog() {
+        Dialog<VillagerEmployee> dialog = new Dialog<>();
+        dialog.setTitle("Add Villager");
+        dialog.setHeaderText("Enter new villager details:");
+
+        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+
+        GridPane grid = createVillagerForm(null);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                return extractVillagerFromForm(grid);
+            }
+            return null;
+        });
+
+        return dialog;
     }
 
     private Dialog<VillagerEmployee> createEditVillagerDialog(VillagerEmployee villager) {
@@ -600,6 +595,16 @@ public class VillagerEMSController {
         return null;
     }
 
+    private void appendLog(String title, String message, String emoji) {
+        Text header = new Text("\n" + emoji + " " + title + "\n");
+        header.setStyle("-fx-font-weight: bold; -fx-fill: #1976D2;");
+
+        Text body = new Text(message + "\n");
+        body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
+
+        reportFlow.getChildren().addAll(header, body);
+    }
+
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
@@ -608,10 +613,14 @@ public class VillagerEMSController {
         alert.showAndWait();
     }
 
+    private String getCurrentTimestamp() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
     private void updateStatistics() {
-        if (villagers.isEmpty()) {
-            return;
-        }
+        reportFlow.getChildren().removeIf(node ->
+                node instanceof Text && ((Text) node).getText().contains("📊 Village Stats:")
+        );
 
         long farmers = villagers.stream().filter(e -> e instanceof FarmerVillager).count();
         long blacksmiths = villagers.stream().filter(e -> e instanceof BlacksmithVillager).count();
@@ -620,88 +629,52 @@ public class VillagerEMSController {
         long librarians = villagers.stream().filter(e -> e instanceof LibrarianVillager).count();
         double totalEmeralds = villagers.stream().mapToDouble(VillagerEmployee::computeSalary).sum();
 
-        String stats = String.format("📊 §aVillage Stats:§r %d Villagers (§2%d Farmers§r, §8%d Blacksmiths§r, §c%d Butchers§r, §5%d Clerics§r, §9%d Librarians§r) | §eEmeralds:§r 💎 %.2f\n",
-                villagers.size(), farmers, blacksmiths, butchers, clerics, librarians, totalEmeralds);
+        Text statsLabel = new Text("📊 Village Stats: ");
+        statsLabel.setStyle("-fx-font-weight: bold; -fx-fill: #388E3C;");
 
-        // Remove previous stats line if present
-        StringBuilder newText = new StringBuilder();
-        boolean replaced = false;
-        for (javafx.scene.Node node : reportFlow.getChildren()) {
-            if (node instanceof Text) {
-                String text = ((Text) node).getText();
-                if (text.contains("📊 §aVillage Stats:") && !replaced) {
-                    newText.append(stats);
-                    replaced = true;
-                } else {
-                    newText.append(text);
-                }
-            }
-        }
-        if (!replaced) {
-            newText.append(stats);
-        }
-        reportFlow.getChildren().clear();
-        reportFlow.getChildren().add(new Text(newText.toString()));
+        Text total = new Text(villagers.size() + " Villagers (");
+        total.setStyle("-fx-font-weight: bold; -fx-fill: #333;");
+
+        Text farmer = new Text(farmers + " Farmers");
+        farmer.setStyle("-fx-fill: #388E3C;");
+
+        Text comma1 = new Text(", ");
+        Text blacksmith = new Text(blacksmiths + " Blacksmiths");
+        blacksmith.setStyle("-fx-fill: #616161;");
+
+        Text comma2 = new Text(", ");
+        Text butcher = new Text(butchers + " Butchers");
+        butcher.setStyle("-fx-fill: #c62828;");
+
+        Text comma3 = new Text(", ");
+        Text cleric = new Text(clerics + " Clerics");
+        cleric.setStyle("-fx-fill: #6a1b9a;");
+
+        Text comma4 = new Text(", ");
+        Text librarian = new Text(librarians + " Librarians");
+        librarian.setStyle("-fx-fill: #1976d2;");
+
+        Text closeParen = new Text(") | ");
+        Text emeraldsLabel = new Text("Emeralds: ");
+        emeraldsLabel.setStyle("-fx-font-weight: bold; -fx-fill: #fbc02d;");
+
+        Text emeralds = new Text("💎 " + String.format("%.2f", totalEmeralds) + "\n");
+        emeralds.setStyle("-fx-fill: #388E3C;");
+
+        int insertIndex = Math.min(2, reportFlow.getChildren().size());
+        reportFlow.getChildren().add(insertIndex++, statsLabel);
+        reportFlow.getChildren().add(insertIndex++, total);
+        reportFlow.getChildren().add(insertIndex++, farmer);
+        reportFlow.getChildren().add(insertIndex++, comma1);
+        reportFlow.getChildren().add(insertIndex++, blacksmith);
+        reportFlow.getChildren().add(insertIndex++, comma2);
+        reportFlow.getChildren().add(insertIndex++, butcher);
+        reportFlow.getChildren().add(insertIndex++, comma3);
+        reportFlow.getChildren().add(insertIndex++, cleric);
+        reportFlow.getChildren().add(insertIndex++, comma4);
+        reportFlow.getChildren().add(insertIndex++, librarian);
+        reportFlow.getChildren().add(insertIndex++, closeParen);
+        reportFlow.getChildren().add(insertIndex++, emeraldsLabel);
+        reportFlow.getChildren().add(insertIndex, emeralds);
     }
-
-    private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    }
-
-    private void addSampleData() {
-        FarmerVillager farmer = new FarmerVillager(1001, "Bob the Farmer", "Oakville", 3, 15.0, "Wheat");
-        farmer.setHoursWorked(40);
-        villagers.add(farmer);
-
-        BlacksmithVillager blacksmith = new BlacksmithVillager(1002, "Iron Mike", "Stonehaven", 5, 2500.0, 40, "Weapons");
-        villagers.add(blacksmith);
-
-        ButcherVillager butcher = new ButcherVillager(1003, "Chop Suey", "Meatville", 2, 18.0, 38, "Beef");
-        villagers.add(butcher);
-
-        ClericVillager cleric = new ClericVillager(1004, "Healer Joe", "Sanctuary", 4, 20.0, 40, "Healing");
-        villagers.add(cleric);
-
-        LibrarianVillager librarian = new LibrarianVillager(1005, "Booker T.", "Librarytown", 3, 19.0, 40, "History");
-        villagers.add(librarian);
-
-        reportFlow.getChildren().add(new Text("✅ §aSample villagers spawned in the village!§r\n"));
-        reportFlow.getChildren().add(new Text("   - Bob the Farmer (Lvl 3, Wheat)\n"));
-        reportFlow.getChildren().add(new Text("   - Iron Mike (Lvl 5, Weapons)\n"));
-        reportFlow.getChildren().add(new Text("   - Chop Suey (Lvl 2, Beef)\n"));
-        reportFlow.getChildren().add(new Text("   - Healer Joe (Lvl 4, Healing)\n"));
-        reportFlow.getChildren().add(new Text("   - Booker T. (Lvl 3, History)\n\n"));
-    }
-
-    private void appendLog(String title, String message, String type) {
-        Text header = new Text("\n" + type + " " + title + "\n");
-        header.setStyle("-fx-font-weight: bold; -fx-fill: #2e7d32;");
-
-        Text divider = new Text("----------------------------------------\n");
-        divider.setStyle("-fx-fill: #888;");
-
-        Text body = new Text(message + "\n");
-        body.setStyle("-fx-font-family: 'Courier New';");
-
-        Text footer = new Text("----------------------------------------\n");
-        footer.setStyle("-fx-fill: #888;");
-
-        reportFlow.getChildren().addAll(header, divider, body, footer);
-    }
-
-    @FXML
-    private void onCalculateSalary() {
-        VillagerEmployee selected = employeeTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showAlert("No Villager Selected", "Select a villager to calculate their salary.");
-            return;
-        }
-        double salary = selected.computeSalary();
-        String message = String.format(
-                "• Name: %s\n• Profession: %s\n• XP Level: %d\n• Salary: 💎 %.2f emeralds/month",
-                selected.getName(), selected.getProfession(), selected.getExperienceLevel(), salary
-        );
-        appendLog("Salary Calculation", message, "💰");
-    }
-
 }
