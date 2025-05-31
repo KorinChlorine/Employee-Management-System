@@ -11,7 +11,19 @@ public class FarmerVillager extends VillagerEmployee implements EmployeeActions 
         super(employeeId, name, village, experienceLevel);
         this.hourlyRate = hourlyRate;
         this.cropSpecialty = cropSpecialty;
-        this.hoursWorked = 40; // Default work week
+        this.hoursWorked = 160; // Default monthly hours
+    }
+
+    @Override
+    public double getMonthlyRate() {
+        return hourlyRate * hoursWorked;
+    }
+
+    public void setSpecialty(String specialty) {
+        setCropSpecialty(specialty);
+    }
+    public String getSpecialty() {
+        return getCropSpecialty();
     }
 
     @Override
@@ -24,19 +36,20 @@ public class FarmerVillager extends VillagerEmployee implements EmployeeActions 
     public double computeSalary() {
         double baseSalary = hourlyRate * hoursWorked;
         double experienceBonus = baseSalary * (getExperienceLevel() * 0.1);
-        return baseSalary + experienceBonus;
+        double yieldBonus = getExperienceLevel() * 25;
+        return baseSalary + experienceBonus + yieldBonus;
     }
 
     @Override
     public String submitReport() {
-        return getName() + " has harvested " + cropSpecialty + " crops. Weekly yield: " +
-                (getExperienceLevel() * 50) + " units.";
+        return getName() + " has harvested " + cropSpecialty + " crops this month. " +
+                "Yield: " + (getExperienceLevel() * 200) + " units.";
     }
 
     @Override
     public void levelUp() {
         setExperienceLevel(getExperienceLevel() + 1);
-        hourlyRate += 2.0; // Salary increase with level
+        hourlyRate += 2.0;
     }
 
     @Override

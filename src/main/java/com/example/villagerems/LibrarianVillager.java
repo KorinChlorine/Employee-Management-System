@@ -12,8 +12,21 @@ public class LibrarianVillager extends VillagerEmployee implements EmployeeActio
         super(employeeId, name, village, experienceLevel);
         this.hourlyRate = hourlyRate;
         this.knowledgeArea = knowledgeArea;
-        this.hoursWorked = 35;
+        this.hoursWorked = 160; // Default monthly hours
         this.booksManaged = 0;
+    }
+
+    @Override
+    public double getMonthlyRate() {
+        return hourlyRate * hoursWorked;
+    }
+
+    // In LibrarianVillager.java
+    public void setSpecialty(String specialty) {
+        setKnowledgeArea(specialty);
+    }
+    public String getSpecialty() {
+        return getKnowledgeArea();
     }
 
     @Override
@@ -26,13 +39,14 @@ public class LibrarianVillager extends VillagerEmployee implements EmployeeActio
     public double computeSalary() {
         double baseSalary = hourlyRate * hoursWorked;
         double knowledgeBonus = baseSalary * (getExperienceLevel() * 0.12);
-        return baseSalary + knowledgeBonus;
+        double managementBonus = booksManaged * 5;
+        return baseSalary + knowledgeBonus + managementBonus;
     }
 
     @Override
     public String submitReport() {
         return getName() + " has managed " + booksManaged + " books in " + knowledgeArea +
-                " field. Knowledge level: " + (getExperienceLevel() * 15) + " scrolls mastered.";
+                ". Knowledge level: " + (getExperienceLevel() * 15) + " scrolls mastered.";
     }
 
     @Override

@@ -42,4 +42,12 @@ public abstract class VillagerEmployee {
     public StringProperty villageProperty() {
         return new SimpleStringProperty(village);
     }
+
+    public abstract double computeSalary();
+
+
+    public void setEmployeeId(int id) {
+        this.employeeId = id;
+    }
 }
+

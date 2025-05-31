@@ -1,17 +1,35 @@
 package com.example.villagerems;
 
-// BlacksmithVillager.java - Subclass
 public class BlacksmithVillager extends VillagerEmployee implements EmployeeActions {
-    private double salaryPerMonth;
-    private String department;
+    private double hourlyRate;
+    private int hoursWorked;
+    private String specialty;
     private int itemsCrafted;
 
+    // 7-argument constructor
     public BlacksmithVillager(int employeeId, String name, String village, int experienceLevel,
-                              double salaryPerMonth, String department) {
+                              double hourlyRate, int hoursWorked, String specialty) {
         super(employeeId, name, village, experienceLevel);
-        this.salaryPerMonth = salaryPerMonth;
-        this.department = department;
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+        this.specialty = specialty;
         this.itemsCrafted = 0;
+    }
+
+    // 6-argument constructor (defaults hoursWorked to 160)
+    public BlacksmithVillager(int employeeId, String name, String village, int experienceLevel,
+                              double hourlyRate, String specialty) {
+        this(employeeId, name, village, experienceLevel, hourlyRate, 160, specialty);
+    }
+
+    @Override
+    public double getMonthlyRate() {
+        return hourlyRate * hoursWorked;
+    }
+
+    @Override
+    public String getSpecialty() {
+        return specialty;
     }
 
     @Override
@@ -22,7 +40,7 @@ public class BlacksmithVillager extends VillagerEmployee implements EmployeeActi
 
     @Override
     public double computeSalary() {
-        double baseSalary = salaryPerMonth;
+        double baseSalary = hourlyRate * hoursWorked;
         double experienceBonus = baseSalary * (getExperienceLevel() * 0.15);
         double productivityBonus = itemsCrafted * 10;
         return baseSalary + experienceBonus + productivityBonus;
@@ -30,7 +48,7 @@ public class BlacksmithVillager extends VillagerEmployee implements EmployeeActi
 
     @Override
     public String submitReport() {
-        return getName() + " from " + department + " department has crafted " +
+        return getName() + " from " + specialty + " department has crafted " +
                 itemsCrafted + " items this month. Forge efficiency: " +
                 (getExperienceLevel() * 20) + "%";
     }
@@ -38,19 +56,21 @@ public class BlacksmithVillager extends VillagerEmployee implements EmployeeActi
     @Override
     public void levelUp() {
         setExperienceLevel(getExperienceLevel() + 1);
-        salaryPerMonth += 200.0;
+        hourlyRate += 2.0;
     }
 
     @Override
     public String getJobDescription() {
-        return "Creates tools and weapons in the " + department + " department.";
+        return "Creates tools and weapons in the " + specialty + " department.";
     }
 
     // Getters and Setters
-    public double getSalaryPerMonth() { return salaryPerMonth; }
-    public void setSalaryPerMonth(double salaryPerMonth) { this.salaryPerMonth = salaryPerMonth; }
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public double getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(double hourlyRate) { this.hourlyRate = hourlyRate; }
+    public int getHoursWorked() { return hoursWorked; }
+    public void setHoursWorked(int hoursWorked) { this.hoursWorked = hoursWorked; }
+    public String getSpecialtyField() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public int getItemsCrafted() { return itemsCrafted; }
     public void setItemsCrafted(int itemsCrafted) { this.itemsCrafted = itemsCrafted; }
 }

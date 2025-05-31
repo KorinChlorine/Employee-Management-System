@@ -1,5 +1,4 @@
-import com.example.villagerems.EmployeeActions;
-import com.example.villagerems.VillagerEmployee;
+package com.example.villagerems;
 
 // ClericVillager.java - Subclass
 public class ClericVillager extends VillagerEmployee implements EmployeeActions {
@@ -15,6 +14,14 @@ public class ClericVillager extends VillagerEmployee implements EmployeeActions 
         this.temple = temple;
         this.healingSessionsPerformed = 0;
         this.potionsBrewed = 0;
+    }
+
+    public double getMonthlyRate() {
+        return stipend;
+    }
+
+    public String getSpecialty() {
+        return temple;
     }
 
     @Override

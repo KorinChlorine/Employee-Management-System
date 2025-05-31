@@ -6,4 +6,7 @@ public interface EmployeeActions {
     String submitReport();
     void levelUp();
     String getJobDescription();
+    void setEmployeeId(int id);
+    double getMonthlyRate();
+    String getSpecialty();
 }
