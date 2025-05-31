@@ -61,7 +61,7 @@ public class VillagerEMSController {
     @FXML
     private void onStartChatbot() {
         ChatbotWindow window = new ChatbotWindow();
-        window.show()
+        window.show();
     }
 
     private void setupTableColumns() {
