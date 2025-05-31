@@ -10,6 +10,9 @@ module com.example.villagerems {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires com.fasterxml.jackson.databind;
+    requires java.net.http;
+    requires java.desktop;
 
     opens com.example.villagerems to javafx.fxml;
     exports com.example.villagerems;
