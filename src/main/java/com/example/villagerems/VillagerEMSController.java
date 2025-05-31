@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class VillagerEMSController {
     @FXML private VBox sidebar;
@@ -117,6 +118,10 @@ public class VillagerEMSController {
         updateStatistics();
         employeeTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
             updateSidebar(newSel);
+
+            villagerImage.setPreserveRatio(true);
+            villagerImage.setFitWidth(180);   // Adjust as needed
+            villagerImage.setFitHeight(240);  // Adjust as needed for vertical space
         });
     }
     private void updateSidebar(VillagerEmployee villager) {
@@ -130,22 +135,22 @@ public class VillagerEMSController {
         villagerVillage.setText("Village: " + villager.getVillage());
         villagerLevel.setText("XP Level: " + villager.getExperienceLevel());
 
-        // Example: set specialty/knowledge
+
         if (villager instanceof FarmerVillager) {
             villagerSpecialty.setText("Crop: " + ((FarmerVillager) villager).getCropSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/farmer.png")));
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Farmer.png")));
         } else if (villager instanceof BlacksmithVillager) {
             villagerSpecialty.setText("Specialty: " + ((BlacksmithVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/blacksmith.png")));
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Blacksmith.png")));
         } else if (villager instanceof ButcherVillager) {
             villagerSpecialty.setText("Specialty: " + ((ButcherVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/butcher.png")));
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Butcher.png")));
         } else if (villager instanceof ClericVillager) {
             villagerSpecialty.setText("Specialty: " + ((ClericVillager) villager).getSpecialty());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/cleric.png")));
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Cleric.png")));
         } else if (villager instanceof LibrarianVillager) {
             villagerSpecialty.setText("Knowledge: " + ((LibrarianVillager) villager).getKnowledgeArea());
-            villagerImage.setImage(new Image(getClass().getResourceAsStream("/img/librarian.png")));
+            villagerImage.setImage(new Image(getClass().getResourceAsStream("/images/Librarian.png")));
         } else {
             villagerSpecialty.setText("");
             villagerImage.setImage(null);
@@ -154,11 +159,49 @@ public class VillagerEMSController {
 
     private void initializeReportArea() {
         reportFlow.getChildren().clear();
-        reportFlow.getChildren().add(new Text("📜 §lWelcome to the Minecraft Village Workforce Ledger!§r\n"));
-        reportFlow.getChildren().add(new Text("§7No villagers registered yet. Use the buttons above to recruit!§r\n"));
-        reportFlow.getChildren().add(new Text("⏰ System booted at: " + getCurrentTimestamp() + "\n\n"))
-        ;
+
+        // Welcome header
+        Text welcome = new Text("📜 Welcome to the Minecraft Village Workforce Ledger\n");
+        welcome.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-fill: #388E3C;");
+        reportFlow.getChildren().add(welcome);
+
+        // Divider
+        Text divider = new Text("========================================\n");
+        divider.setStyle("-fx-fill: #BDBDBD;");
+        reportFlow.getChildren().add(divider);
+
+        // Initial stats line
+        String stats = String.format(
+                "📊 Village Stats:\n" +
+                        "   • Villagers: 0\n" +
+                        "   • Farmers: 0\n" +
+                        "   • Blacksmiths: 0\n" +
+                        "   • Butchers: 0\n" +
+                        "   • Clerics: 0\n" +
+                        "   • Librarians: 0\n" +
+                        "   • Emeralds: 💎 0.00\n"
+        );
+        Text statsText = new Text(stats);
+        statsText.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px; -fx-fill: #333;");
+        reportFlow.getChildren().add(statsText);
+
+        // No villagers message
+        Text noVillagers = new Text("\nNo villagers registered yet. Use the buttons above to recruit!\n");
+        noVillagers.setStyle("-fx-font-style: italic; -fx-fill: #888;");
+        reportFlow.getChildren().add(noVillagers);
+
+        // Boot time
+        Text bootTime = new Text("\n⏰ System booted at: " + getCurrentTimestamp() + "\n");
+        bootTime.setStyle("-fx-fill: #555;");
+        reportFlow.getChildren().add(bootTime);
+
+        // End divider
+        Text endDivider = new Text("========================================\n\n");
+        endDivider.setStyle("-fx-fill: #BDBDBD;");
+        reportFlow.getChildren().add(endDivider);
     }
+
+
 
     private void setupTableColumns() {
         idColumn.setText("Villager ID");
@@ -193,7 +236,26 @@ public class VillagerEMSController {
             }
         });
     }
+    private Dialog<VillagerEmployee> createAddVillagerDialog() {
+        Dialog<VillagerEmployee> dialog = new Dialog<>();
+        dialog.setTitle("Add Villager");
+        dialog.setHeaderText("Enter new villager details:");
 
+        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+
+        GridPane grid = createVillagerForm(null); // Pass null for a blank form
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                return extractVillagerFromForm(grid);
+            }
+            return null;
+        });
+
+        return dialog;
+    }
     @FXML
     private void onAddVillager() {
         Dialog<VillagerEmployee> dialog = createAddVillagerDialog();
@@ -332,35 +394,7 @@ public class VillagerEMSController {
 
     @FXML
     private void onGenerateReport() {
-        StringBuilder details = new StringBuilder();
-        int count = 1;
-        for (VillagerEmployee emp : villagers) {
-            details.append(String.format(
-                    "• #%d: %s (%s)\n",
-                    emp.getEmployeeId(), emp.getName(), emp.getProfession()
-            ));
-            details.append(String.format(
-                    "    - Village: %s\n", emp.getVillage()
-            ));
-            details.append(String.format(
-                    "    - XP Level: %d\n", emp.getExperienceLevel()
-            ));
-            details.append(String.format(
-                    "    - Emeralds: 💎 %.2f\n", emp.computeSalary()
-            ));
-            details.append(String.format(
-                    "    - Report: %s\n", ((EmployeeActions) emp).submitReport()
-            ));
-            details.append("    ----------------------------------------\n");
-            count++;
-        }
-        String report = String.format(
-                "📊 Village Workforce Report\n========================================\n" +
-                        "• Total Villagers: %d\n• Generated: %s\n\n%s" +
-                        "========================================\n=== End of Report ===\n",
-                villagers.size(), getCurrentTimestamp(), details
-        );
-        appendLog("Village Workforce Report", report, "📊");
+        appendWorkforceReport(villagers);
     }
 
     @FXML
@@ -374,25 +408,36 @@ public class VillagerEMSController {
         );
     }
 
-    private Dialog<VillagerEmployee> createAddVillagerDialog() {
-        Dialog<VillagerEmployee> dialog = new Dialog<>();
-        dialog.setTitle("Recruit New Villager");
-        dialog.setHeaderText("Enter villager details:");
+    private void appendWorkforceReport(ObservableList<VillagerEmployee> villagers) {
+        Text header = new Text("\n📊 Workforce Report\n");
+        header.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-fill: #1976D2;");
 
-        ButtonType addButtonType = new ButtonType("Recruit", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+        Text divider = new Text("----------------------------------------\n");
+        divider.setStyle("-fx-fill: #90A4AE;");
 
-        GridPane grid = createVillagerForm(null);
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == addButtonType) {
-                return extractVillagerFromForm(grid);
+        StringBuilder report = new StringBuilder();
+        for (VillagerEmployee v : villagers) {
+            String specialty = "";
+            if (v instanceof FarmerVillager) {
+                specialty = "Crop: " + ((FarmerVillager) v).getCropSpecialty();
+            } else if (v instanceof BlacksmithVillager) {
+                specialty = "Specialty: " + ((BlacksmithVillager) v).getSpecialty();
+            } else if (v instanceof ButcherVillager) {
+                specialty = "Specialty: " + ((ButcherVillager) v).getSpecialty();
+            } else if (v instanceof ClericVillager) {
+                specialty = "Specialty: " + ((ClericVillager) v).getSpecialty();
+            } else if (v instanceof LibrarianVillager) {
+                specialty = "Knowledge: " + ((LibrarianVillager) v).getKnowledgeArea();
             }
-            return null;
-        });
+            report.append(String.format(
+                    "• %s (%s)\n   - Village: %s\n   - Level: %d\n   - %s\n   - Salary: 💎 %.2f\n\n",
+                    v.getName(), v.getProfession(), v.getVillage(), v.getExperienceLevel(), specialty, v.computeSalary()
+            ));
+        }
+        Text body = new Text(report.toString());
+        body.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
 
-        return dialog;
+        reportFlow.getChildren().addAll(header, divider, body, divider);
     }
 
     private Dialog<VillagerEmployee> createEditVillagerDialog(VillagerEmployee villager) {
@@ -658,4 +703,5 @@ public class VillagerEMSController {
         );
         appendLog("Salary Calculation", message, "💰");
     }
+
 }
